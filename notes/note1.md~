@@ -1,0 +1,8 @@
+# Markdown notes for OS
+
+## 1, the ucore image
+bootloader in the first segment of the disk
+the Kernel ELF in the second segment of the disk
+
+## 2, the boot process
+
