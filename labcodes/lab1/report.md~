@@ -1,0 +1,37 @@
+
+# for example, this line means the echo line and what actually happened
++ cc kern/trap/vectors.S
+gcc -Ikern/trap/ -fno-builtin -Wall -ggdb -m32 -gstabs -nostdinc  -fno-stack-protector -Ilibs/ -Ikern/debug/ -Ikern/driver/ -Ikern/trap/ -Ikern/mm/ -c kern/trap/vectors.S -o obj/kern/trap/vectors.o
+
+# mainly compile the lib and the kernel
+
+# ld -T means read ld script
+# kernel.ld
+# entry point: kern_init() in kernel/init/init.c
++ ld bin/kernel
+ld -m    elf_i386 -nostdlib -T tools/kernel.ld -o bin/kernel  obj/kern/init/init.o obj/kern/libs/readline.o obj/kern/libs/stdio.o obj/kern/debug/kdebug.o obj/kern/debug/kmonitor.o obj/kern/debug/panic.o obj/kern/driver/clock.o obj/kern/driver/console.o obj/kern/driver/intr.o obj/kern/driver/picirq.o obj/kern/trap/trap.o obj/kern/trap/trapentry.o obj/kern/trap/vectors.o obj/kern/mm/pmm.o  obj/libs/printfmt.o obj/libs/string.o
+
+
++ cc boot/bootasm.S
++ cc boot/bootmain.c
+# sign make a executable
++ cc tools/sign.c
+# a sign write the 512 bytes of the img file and set the boot sector
+# end with 0x55 0xAA
+
++ ld bin/bootblock
+ld -m    elf_i386 -nostdlib -N -e start -Ttext 0x7C00 obj/boot/bootasm.o obj/boot/bootmain.o -o obj/bootblock.o
+'obj/bootblock.out' size: 472 bytes
+build 512 bytes boot sector: 'bin/bootblock' success!
+
+# first 10000 is the input file
+# then boot block
+# then kernel code
+dd if=/dev/zero of=bin/ucore.img count=10000
+dd if=bin/bootblock of=bin/ucore.img conv=notrunc
+dd if=bin/kernel of=bin/ucore.img seek=1 conv=notrunc
+
+# booting process
+# BIOS read the boot sector of the disk and jump to it
+# the first code executed is bootasm.S
+# then the assembly calls the bootmain.c and go on
